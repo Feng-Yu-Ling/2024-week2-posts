@@ -108,6 +108,7 @@ const requestListener = async(req, res)=>{
 
     // 刪除一筆貼文
     else if(req.url.startsWith("/posts/") && req.method=="DELETE"){
+        try{
         const id = req.url.split('/').pop();
         // 等待資料庫刪除完成，因為這是一個異步操作，會返回promise，所以需要加await
         const searchResult = await Post.findByIdAndDelete(id);
@@ -128,6 +129,16 @@ const requestListener = async(req, res)=>{
                 "data": null,
         }));
         res.end();
+        }
+        }
+        catch(error){
+            res.writeHead(400, headers);
+            // 將object轉換為字串，不然伺服器無法解析
+            res.write(JSON.stringify({
+                "status":"false",
+                "message":"post ID格式不正確"
+            }))
+            res.end();
         }
     }
 
@@ -167,7 +178,7 @@ const requestListener = async(req, res)=>{
                 // 將object轉換為字串，不然伺服器無法解析
                 res.write(JSON.stringify({
                     "status":"false",
-                    "message":"欄位未填寫正確，或無此 post ID"
+                    "message":"欄位未填寫正確，或post ID格式不正確"
                 }))
                 res.end();
             }
