@@ -74,7 +74,7 @@ const requestListener = async(req, res)=>{
                     // 將object轉換為字串，不然伺服器無法解析
                     res.write(JSON.stringify({
                         "status": "false",
-                        "message": "欄位未填寫正確，或無此 todo ID",
+                        "message": "欄位未填寫正確，或無此 post ID",
                     }));
                     res.end();
                 }
@@ -110,14 +110,25 @@ const requestListener = async(req, res)=>{
     else if(req.url.startsWith("/posts/") && req.method=="DELETE"){
         const id = req.url.split('/').pop();
         // 等待資料庫刪除完成，因為這是一個異步操作，會返回promise，所以需要加await
-        await Post.findByIdAndDelete(id);
-        res.writeHead(200,headers);
-        // 將object轉換為字串，不然伺服器無法解析
-        res.write(JSON.stringify({
-            "status": "success",
-            "data": null,
+        const searchResult = await Post.findByIdAndDelete(id);
+        if(!searchResult){
+            res.writeHead(400, headers);
+            // 將object轉換為字串，不然伺服器無法解析
+            res.write(JSON.stringify({
+                "status":"false",
+                "message":"無此 post ID"
+            }))
+            res.end();
+        }
+        else{
+            res.writeHead(200,headers);
+            // 將object轉換為字串，不然伺服器無法解析
+            res.write(JSON.stringify({
+                "status": "success",
+                "data": null,
         }));
         res.end();
+        }
     }
 
     // 更新一筆貼文
@@ -129,7 +140,17 @@ const requestListener = async(req, res)=>{
                 const id = req.url.split("/").pop();
                 // 等待資料庫更新資料，因為這是一個異步操作，會返回promise，所以需要加await
                 // 由於這裡用了await，所以上一層的函式要加async才可以正確執行
-                await Post.findByIdAndUpdate(id, data);
+                const searchResult = await Post.findByIdAndUpdate(id, data);
+                if(!searchResult){
+                res.writeHead(400, headers);
+                // 將object轉換為字串，不然伺服器無法解析
+                res.write(JSON.stringify({
+                    "status":"false",
+                    "message":"無此 post ID"
+                }))
+                res.end();
+                }
+                else{
                 // 等待資料庫回傳結果，因為這是一個異步操作，會返回promise，所以需要加await
                 const updatedPost = await Post.findById(id)
                 res.writeHead(200, headers);
@@ -139,13 +160,14 @@ const requestListener = async(req, res)=>{
                     "data":updatedPost
                 }));
                 res.end();
+                }
             }
             catch(error){
                 res.writeHead(400, headers);
                 // 將object轉換為字串，不然伺服器無法解析
                 res.write(JSON.stringify({
                     "status":"false",
-                    "message":"欄位未填寫正確，或無此 todo ID"
+                    "message":"欄位未填寫正確，或無此 post ID"
                 }))
                 res.end();
             }
