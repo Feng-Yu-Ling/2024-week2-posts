@@ -151,7 +151,8 @@ const requestListener = async(req, res)=>{
                 const id = req.url.split("/").pop();
                 // 等待資料庫更新資料，因為這是一個異步操作，會返回promise，所以需要加await
                 // 由於這裡用了await，所以上一層的函式要加async才可以正確執行
-                const searchResult = await Post.findByIdAndUpdate(id, data);
+                // 在findByIdAndUpdate()加入第三個參數 {runValidators:true}讓它也執行Schema驗證
+                const searchResult = await Post.findByIdAndUpdate(id, data, {runValidators:true});
                 if(!searchResult){
                 res.writeHead(400, headers);
                 // 將object轉換為字串，不然伺服器無法解析
@@ -178,7 +179,7 @@ const requestListener = async(req, res)=>{
                 // 將object轉換為字串，不然伺服器無法解析
                 res.write(JSON.stringify({
                     "status":"false",
-                    "message":"欄位未填寫正確，或post ID格式不正確"
+                    "message":"欄位未填寫正確，或post ID格式不正確或content為null"
                 }))
                 res.end();
             }
